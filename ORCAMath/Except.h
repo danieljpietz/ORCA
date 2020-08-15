@@ -4,6 +4,7 @@
 //
 //  Created by Daniel Pietz on 8/15/20.
 //  Copyright © 2020 Daniel Pietz. All rights reserved.
+//  Version 1.0 Updated August 15, 2020
 //
 
 #ifndef Except_h
@@ -13,7 +14,7 @@
 
 /* ORCA Namespace */
 
-namespace ORCA{
+namespace ORCA {
 
 /* ORCAExcept Namespace */
 
