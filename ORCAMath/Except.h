@@ -108,6 +108,7 @@ public:
         this->_code = ORCA_BAD_DIMENSIONS;
         this->_desc = "ORCA Incompatible Dimensions Error: ";
     }
+    
 };
 
 /* EmptyElementError: Thrown when empty data is passed to an operation */
@@ -122,6 +123,36 @@ public:
     EmptyElementError() {
         this->_code = ORCA_EMPTY_ELEMENT;
         this->_desc = "ORCA Empty Element Error: ";
+    }
+};
+
+/* OutOfBoundsError: Thrown data is indexed out of bounds */
+
+class OutOfBoundsError : public ORCAException {
+public:
+    
+    /**
+     * Default constructor.
+     */
+    
+    OutOfBoundsError() {
+        this->_code = ORCA_OUT_OF_BOUNDS;
+        this->_desc = "ORCA Out of Bounds Error: ";
+    }
+};
+
+/* UnknownFillError: Thrown data is filled with an improper type */
+
+class UnknownFillError : public ORCAException {
+public:
+    
+    /**
+     * Default constructor.
+     */
+    
+    UnknownFillError() {
+        this->_code = ORCA_UNKNOWN_FILL_TYPE;
+        this->_desc = "ORCA Unknown Fill Type Error: ";
     }
 };
 
