@@ -10,6 +10,8 @@
 #ifndef ORCAMath_h
 #define ORCAMath_h
 
+#define ORCA_SIZE_TYPE long long
+
 /* Error Code Definitions */
 
 #define ORCA_SUCCESS 0x1
@@ -31,7 +33,12 @@
 #define ORCA_DISABLE_EMPTY_CHECKS
 #endif /* ORCA_DISABLE_ERROR_CHECKS */
 
+#define ORCA_DISABLE_STICKY_COMPUTE
+
 #include "Complex.h"
+#include "Mat.h"
+#include "Vec.h"
+#include "Fill.h"
 #include "Except.h"
 
 #endif /* ORCAMath_h */
