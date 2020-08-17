@@ -10,6 +10,8 @@
 #ifndef Vec_h
 #define Vec_h
 
+/* Includes for Vec.h */
+
 #include "Except.h" // Included for ORCA Exceptions
 #include "Mat.h"    // Included for Matrix subclassing
 
@@ -271,6 +273,20 @@ public:
         ORCA_SIZE_TYPE i;
         for (i = 0; i < _casted->length(); ++i) {
             this->set(i, _casted->at(i));
+        }
+    }
+    
+    /**
+     * Casted constructor from MatRow type
+     * @tparam T1 class of other vector
+     * @param _casted pointer to other vector
+     */
+    template <class T1>
+    RowVec(typename Mat<T1>::MatRow _casted) {
+        this->_allocate(_casted.length());
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < _casted.length(); ++i) {
+            this->set(i, _casted.at(i));
         }
     }
     
