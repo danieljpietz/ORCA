@@ -12,6 +12,8 @@
 
 /* Includes for Complex.h */
 #include "Except.h" // Included for throwing ORCA exceptions
+#include "Constants.h" // Included for constant values
+#include <cmath>    // Included for root and angle calculating
 
 /* ORCA Print Unit */
 
@@ -28,6 +30,7 @@ namespace ORCA {
  * Stores numbers in the form a+bi where i = sqrt(-1)
  * @tparam T Complex base type
  */
+
 template <class T>
 class Complex {
 protected:
@@ -145,6 +148,14 @@ public:
         return Complex<T>(this->_real, -this->_imag);
     }
     
+    /**
+     * Returns the magnitude of the number when written in polar form
+     */
+    
+    auto norm() const {
+        return std::sqrt((this->re() * this->re()) + (this->im() * this->im()));
+    }
+    
 };
 
 /* Below are all overloaded mathematical operators for the complex class */
@@ -192,6 +203,36 @@ auto operator + (T1 c1, Complex<T2> c2) {
 }
 
 /**
+ * Addition operator for 2 complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right complex type
+ * @param c1 left complex type
+ * @param c2 right complex type
+ * @return sum of two numbers
+ */
+
+template<class T1, class T2>
+auto operator += (Complex<T1>& c1, Complex<T2> c2) {
+    c1 = c1 + c2;
+    return c1;
+}
+
+/**
+ * Addition operator for a complex and non complex type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param c1 left complex type
+ * @param c2 right  type
+ * @return sum of two numbers
+ */
+
+template<class T1, class T2>
+auto operator += (Complex<T1>& c1, T2 c2) {
+    c1 = c1 + Complex<T2>(c2);
+    return c1;
+}
+
+/**
  * Subtraction operator for 2 complex types
  * @tparam T1 class of left complex type
  * @tparam T2 class of right complex type
@@ -231,6 +272,36 @@ auto operator - (Complex<T1> c1, T2 c2) {
 template<class T1, class T2>
 auto operator - (T1 c1, Complex<T2> c2) {
     return Complex<T1>(c1) - c2;
+}
+
+/**
+ * Subtraction operator for 2 complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right complex type
+ * @param c1 left complex type
+ * @param c2 right complex type
+ * @return difference between numbers
+ */
+
+template<class T1, class T2>
+auto operator -= (Complex<T1>& c1, Complex<T2> c2) {
+    c1 = c1 - c2;
+    return c1;
+}
+
+/**
+ * Subtraction operator for a complex and non complex type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right type
+ * @param c1 left complex type
+ * @param c2 right  type
+ * @return difference between numbers
+ */
+
+template<class T1, class T2>
+auto operator -= (Complex<T1>& c1, T2 c2) {
+    c1 = c1 - Complex<T2>(c2);
+    return c1;
 }
 
 /**
@@ -285,6 +356,108 @@ auto operator * (Complex<T1> c1, T2 c2) {
 template<class T1, class T2>
 auto operator * (T1 c1, Complex<T2> c2) {
     return Complex<T1>(c1) * c2;
+}
+
+/**
+ * Multiplication operator for 2 complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right complex type
+ * @param c1 left complex type
+ * @param c2 right complex type
+ * @return product of numbers
+ */
+
+template<class T1, class T2>
+auto operator *= (Complex<T1>& c1, Complex<T2> c2) {
+    c1 = c1 * c2;
+    return c1;
+}
+
+/**
+ * Multiplication operator for complex and non complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right type
+ * @param c1 left complex type
+ * @param c2 right type
+ * @return product of numbers
+ */
+
+template<class T1, class T2>
+auto operator *= (Complex<T1>& c1, T2 c2) {
+    c1 = c1 * Complex<T2>(c2);
+    return c1;
+}
+/**
+ * Division operator for 2 complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right complex type
+ * @param c1 left complex type
+ * @param c2 right complex type
+ * @return quotient of numbers
+ */
+
+template<class T1, class T2>
+auto operator / (Complex<T1> c1, Complex<T2> c2) {
+    auto div = ((c2.real()*c2.real()) + (c2.imag()*c2.imag()));
+    return Complex<decltype((c1.real()*c2.real() + c1.imag()*c2.imag())/div)>((c1.real()*c2.real() + c1.imag()*c2.imag())/div, (c1.imag()*c2.real() - c1.real()*c2.imag())/div);
+}
+
+/**
+ * Division operator for non complex and complex types
+ * @tparam T1 class of left type
+ * @tparam T2 class of right complex type
+ * @param c1 left type
+ * @param c2 right complex type
+ * @return product of numbers
+ */
+
+template<class T1, class T2>
+auto operator / (T1 c1, Complex<T2> c2) {
+    return Complex<T1>(c1) / c2;
+}
+
+/**
+ * Division operator for complex and non complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right type
+ * @param c1 left complex type
+ * @param c2 right type
+ * @return product of numbers
+ */
+
+template<class T1, class T2>
+auto operator / (Complex<T1> c1, T2 c2) {
+    return c1 / Complex<T2>(c2);
+}
+
+/**
+ * Division operator for 2 complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right complex type
+ * @param c1 left complex type
+ * @param c2 right complex type
+ * @return quotient of numbers
+ */
+
+template<class T1, class T2>
+auto operator /= (Complex<T1>& c1, Complex<T2> c2) {
+    c1 = c1 / c2;
+    return c1;
+}
+
+/**
+ * Division operator for complex and non complex types
+ * @tparam T1 class of left complex type
+ * @tparam T2 class of right type
+ * @param c1 left complex type
+ * @param c2 right type
+ * @return product of numbers
+ */
+
+template<class T1, class T2>
+auto operator /= (Complex<T1>& c1, T2 c2) {
+    c1 = c1 / Complex<T2>(c2);
+    return c1;
 }
 
 /**
@@ -348,6 +521,38 @@ std::ostream& operator<<(std::ostream& os, const Complex<T>* c) {
     return os;
 }
 
+/* Below are common math functions for the Complex class */
+
+/**
+ * Square root function
+ * @return Square root of complex number
+ */
+
+template <class T>
+auto sqrt(Complex<T> _complex) {
+    auto norm = _complex.norm();
+    return Complex<decltype(norm / ORCA_M_ROOT2)>(std::sqrt(norm + _complex.real()), (_complex.imag() > 0 ? 1 : -1) * std::sqrt(norm - _complex.real()))/ORCA_M_ROOT2;
+}
+
+/**
+ * Absolute value function
+ * @return Magnitude  complex number
+ */
+
+template <class T>
+auto abs(Complex<T> _complex) {
+    return _complex.norm();
+}
+
+/**
+ * Norm  value function
+ * @return Magnitude  complex number
+ */
+
+template <class T>
+auto norm(Complex<T> _complex) {
+    return _complex.norm();
+}
 
 }
 
