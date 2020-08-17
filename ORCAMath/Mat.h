@@ -10,9 +10,11 @@
 #ifndef Mat_h
 #define Mat_h
 
+/* Includes for Mat.h */
+
 #include "Except.h" // Included for ORCA Exceptions
 #include "Fill.h"   // Included for Fill types
-#include <random>
+#include <random>   // Included for Fill Rand
 
 namespace ORCA {
 
@@ -82,14 +84,51 @@ protected:
     class MatRow;       // Container Class for obtaining a row of a matrix
     class MatCol;       // Container Class for obtaining a column of a matrix
     
+    /* Class definition for Mat TR */
+    /* This class is a read-only container to speed up transpose operations */
+    
+    class MatTr : public Mat<T> {
+    protected:
+        /* Below are protected members of the MatTr class */
+        Mat<T>* _matrix;    // Pointer to matrix this matrix is the transpose of
+    public:
+        
+        /* Below are public constructors for the MatTr class */
+        
+        /**
+         * Constructor from pointer to matrix
+         * @param matrix Address of matrix
+         */
+        
+        MatTr(Mat<T>* matrix) {
+            this->_matrix = matrix;
+            this->_n_cols = matrix->cols();
+            this->_n_rows = matrix->rows();
+        } /* MatTr(Mat<T>* matrix) */
+        
+        /* Below are public getters for the Mat class */
+        
+        /**
+         * Returns element at the specified index
+         * @param row Element Row Index
+         * @param col Element Column Index
+         */
+        
+        virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override {
+            return this->_matrix->at(col, row); //Index the matrix
+        } /* virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const */
+        
+    }; /* class Mat<T>::MatTr : public Mat<T> */
+    
     /* Below are protcted variables of the Mat class */
     
     T *_mat;                    // Storage pointer for matrix elements
     ORCA_SIZE_TYPE _n_rows;                // Number of rows in the matrix
     ORCA_SIZE_TYPE _n_cols;                // Number of columns in the matrix
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
-    ORCA_SIZE_TYPE _stickyComputeMask;     // State of stickyCompute storage for Matrix class. Only included if stickyCompute is enabled
+    unsigned long long _stickyComputeMask;     // State of stickyCompute storage for Matrix class. Only included if stickyCompute is enabled
     T _det;                     // Determinant of matrix. Only included if stickyCompute is enabled
+    //Vec<T>* _diag;                   // Diagonal of matrix
     //Mat<T> _transpose;             // Transpose of matrix. Only included if stickyCompute is enabled
     //Mat<T> _inv;                   // Inverse of matrix. Only included if stickyCompute is enabled.
 #endif
@@ -192,6 +231,21 @@ public:
      */
     template <class T1>
     Mat(Mat<T1> _castM) {
+        _allocate(_castM.rows(), _castM.cols());
+        ORCA_SIZE_TYPE i,j;
+        for (i = 0; i < this->rows(); ++i) {
+            for (j = 0; j < this->cols(); ++j) {
+                this->set(i, j, _castM.at(i,j));
+            }
+        }
+    } /* Mat(int rows, int cols) */
+    
+    /**
+     * Casted copy constructor from a  matrix tranpose container class
+     * @param _castM Other matrix
+     */
+    
+    Mat(MatTr _castM) {
         _allocate(_castM.rows(), _castM.cols());
         ORCA_SIZE_TYPE i,j;
         for (i = 0; i < this->rows(); ++i) {
@@ -339,6 +393,42 @@ public:
 #endif
     } /* set(int row, int col, T elem) */
     
+    /**
+     * Set a row in the matrix equal to _vec
+     * @param row row number
+     * @param _vec vector
+     */
+    
+    virtual void setRow(ORCA_SIZE_TYPE row, Vec<T> _vec) {
+#ifndef ORCA_DISABLE_DIMENSION_CHECKS
+        if (_vec.length() != this->_n_cols) {
+            throw ORCAExcept::BadDimensionsError(); // Attempting to add a row of the wrong size
+        }
+#endif
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < this->_n_cols; ++i) {
+            this->set(row, i, _vec.at(i));
+        }
+    } /* virtual void setRow(ORCA_SIZE_TYPE row, Vec<T> _vec) */
+    
+    /**
+     * Set a col in the matrix equal to _vec
+     * @param col col number
+     * @param _vec vector
+     */
+    
+    virtual void setCol(ORCA_SIZE_TYPE col, Vec<T> _vec) {
+#ifndef ORCA_DISABLE_DIMENSION_CHECKS
+        if (_vec.length() != this->_n_rows) {
+            throw ORCAExcept::BadDimensionsError(); // Attempting to add a column of the wrong size
+        }
+#endif
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < this->_n_rows; ++i) {
+            this->set(i, col, _vec.at(i));
+        }
+    } /* virtual void setRow(ORCA_SIZE_TYPE row, Vec<T> _vec) */
+    
     /* Below are public getters for the Mat class */
     
     /**
@@ -349,7 +439,7 @@ public:
     
     virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const {
         return *(_address(row, col)); //Index the matrix
-    }
+    } /* virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const */
     
     /**
      * Returns number of rows in matrix
@@ -357,7 +447,7 @@ public:
     
     ORCA_SIZE_TYPE rows() const {
         return this->_n_rows;
-    }
+    } /* ORCA_SIZE_TYPE rows() const */
     
     /**
      * Returns number of columns in matrix
@@ -365,6 +455,39 @@ public:
     
     ORCA_SIZE_TYPE cols() const {
         return this->_n_cols;
+    } /* ORCA_SIZE_TYPE cols() const */
+    
+    /**
+     * Returns a vector of the diagonal of the matrix
+     */
+    
+    Vec<T> diag() const {
+#ifndef ORCA_DISABLE_STICKY_COMPUTE
+        if ((this->_stickyComputeMask & ORCA_STICKY_COMPUTE_DIAG_MASK) != 0) {
+            return _diag;
+        }
+        else {
+            this->_stickyComputeMask |= ORCA_STICKY_COMPUTE_DIAG_MASK;
+        }
+#endif
+        
+        Vec<T> result(std::min(this->_n_rows, this->_n_cols));
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < result.length(); ++i) {
+            result.set(i, this->at(i,i));
+        }
+#ifndef ORCA_DISABLE_STICKY_COMPUTE
+        _diag = result;
+#endif
+        return result;
+    } /* Vec<T> diag() const */
+    
+    /**
+     * Returns a transpose container for the matrix
+     */
+    
+    MatTr t() {
+        return MatTr(this);
     }
     
     /**
@@ -373,8 +496,13 @@ public:
      */
     
     MatRow getRow(ORCA_SIZE_TYPE row) {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if ((row > this->_n_rows) || (row < 0)) {
+            throw ORCAExcept::OutOfBoundsError(); // Attempted to grab a row out of bounds
+        }
+#endif
         return MatRow(this, row);
-    }
+    } /* MatRow getRow(ORCA_SIZE_TYPE row) */
     
     /**
      * Returns the specified column
@@ -382,8 +510,98 @@ public:
      */
     
     MatCol getCol(ORCA_SIZE_TYPE col) {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if ((col > this->_n_cols) || (col < 0)) {
+            throw ORCAExcept::OutOfBoundsError(); // Attempted to grab a col out of bounds
+        }
+#endif
         return MatCol(this, col);
-    }
+    } /* MatCol getCol(ORCA_SIZE_TYPE col) */
+    
+    /* Below are the row operatations for the Mat class */
+    
+    /**
+     * Swap 2 rows in  a matrix
+     * @param r1 first row
+     * @param r2 second row
+     */
+    
+    virtual void rowSwap(ORCA_SIZE_TYPE r1, ORCA_SIZE_TYPE r2) {
+        //TODO: Issues with overloaded 'at' for MatRow makes this consruction necesarry
+        MatRow r1Temp = this->getRow(r1);
+        Vec<T> r1TempLoaded(this->_n_rows);
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < this->_n_cols; ++i) {
+            r1TempLoaded.set(i, r1Temp.at(i));
+        }
+        
+        for (i = 0; i < this->_n_cols; ++i) {
+            this->set(r1, i, this->at(r2, i));
+        }
+        
+        this->setRow(r2, r1TempLoaded);
+    } /* virtual void rowSwap(ORCA_SIZE_TYPE r1, ORCA_SIZE_TYPE r2) */
+    
+    /**
+     * Multiply a row by a constant
+     * @param r1 row
+     * @param t1 constant
+     */
+    virtual void rowMutliply(ORCA_SIZE_TYPE r1, T t1) {
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < this->_n_cols; ++i) {
+            this->set(r1, i, t1 * this->at(r1, i));
+        }
+    } /* virtual void rowMutliply(ORCA_SIZE_TYPE r1, T t1) */
+    
+    /**
+     * Add a row to another row
+     * @param r1 row1
+     * @param r2 row2
+     */
+    
+    virtual void rowAdd(ORCA_SIZE_TYPE r1, ORCA_SIZE_TYPE r2) {
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < this->_n_cols; ++i) {
+            this->set(r1, i, this->at(r1, i) + this->at(r2, i));
+        }
+    } /* virtual void rowAdd(ORCA_SIZE_TYPE r1, ORCA_SIZE_TYPE r2) */
+    
+    /**
+     * Subtract a row from another row
+     * @param r1 row1
+     * @param r2 row2
+     */
+    
+    virtual void rowSubtract(ORCA_SIZE_TYPE r1, ORCA_SIZE_TYPE r2) {
+        ORCA_SIZE_TYPE i;
+        for (i = 0; i < this->_n_cols; ++i) {
+            this->set(r1, i, this->at(r1, i) - this->at(r2, i));
+        }
+    } /* virtual void rowSubtract(ORCA_SIZE_TYPE r1, ORCA_SIZE_TYPE r2) */
+    
+    /* Below are member functions of the Mat class */
+    
+    T det() {
+        assert(0);
+        ORCA_SIZE_TYPE i, j;
+        Mat<T> tempClone = *this;
+        std::cout << tempClone << std::endl;
+        for (j = 0; j < this->_n_cols; ++j) {
+            for (i = this->_n_rows - 1; i > j; --i) {
+                T current = this->at(i, j);
+                T above = this->at(i-1, j);
+                if (current == 0) {
+                    this->rowSwap(i, i-1);
+                }
+                this->rowMutliply(i, 1/current);
+                this->rowMutliply(i-1, 1/above);
+                this->rowSubtract(i, i-1);
+            }
+            std::cout << tempClone << std::endl;
+        }
+        return 0;
+    } /* T det() */
     
 }; /* Mat class */
 
@@ -578,7 +796,7 @@ auto operator * (Mat<T1> m1, Mat<T2> m2) {
         }
     }
     return result;
-}
+} /* auto operator * (Mat<T1> m1, Mat<T2> m2) */
 
 
 
