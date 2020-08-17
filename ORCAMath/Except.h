@@ -10,8 +10,6 @@
 #ifndef Except_h
 #define Except_h
 
-#include "ORCAMath.h"
-
 /* ORCA Namespace */
 
 namespace ORCA {
