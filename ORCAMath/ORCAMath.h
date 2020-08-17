@@ -33,9 +33,16 @@
 #define ORCA_DISABLE_EMPTY_CHECKS
 #endif /* ORCA_DISABLE_ERROR_CHECKS */
 
+/* Sticky compute mask definitions */
+
 #define ORCA_DISABLE_STICKY_COMPUTE
 
+#ifndef ORCA_DISABLE_STICKY_COMPUTE
+#define ORCA_STICKY_COMPUTE_DIAG_MASK 1
+#endif
+
 #include "Complex.h"
+#include "Quaternion.h"
 #include "Mat.h"
 #include "Vec.h"
 #include "Fill.h"
