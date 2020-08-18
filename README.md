@@ -1,3 +1,6 @@
+Version 1.0: Creating general layout (*08/17/2020*)
+Version 1.1: Fixed syntax errors (*08/17/2020*)
+
 # ORCA 
 
 ORCA is a mathematics header-library for C++ with a focus on specific tools for robotic and dynamic applications. 
@@ -10,9 +13,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 What you will need and how to install the software.
 
-'''
+```
 examples
-'''
+```
 
 ### Installing
 
@@ -20,15 +23,15 @@ A step by step series of examples showing you how to get a development environme
 
 Say what the step is
 
-'''
+```
 give the example
-'''
+```
 
 and repeat
 
-'''
+```
 until finished
-'''
+```
 
 End with an example of getting some data out of the system or using the software in a demo.
 
@@ -42,17 +45,17 @@ Break down the tests into end to end tests for the system.
 
 Explain what the next series of tests are testing and why.
 
-'''
+```
 give example
-'''
+```
 
 ### Coding Style Testing
 
 explain what these tests are testing for and why.
 
-'''
+```
 another example
-'''
+```
 
 ## Deployment
 
