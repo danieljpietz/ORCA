@@ -154,6 +154,8 @@ public:
     }
 };
 
+
+
 /* Overloaded stream operators for printing error codes */
 
 std::ostream& operator<<(std::ostream& os, const ORCAException& e) {
