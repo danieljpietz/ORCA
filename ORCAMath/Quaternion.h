@@ -525,6 +525,76 @@ auto operator /= (Quaternion<T1>& q1, T2 q2) {
     return q1;
 }
 
+/**
+ * Equalirt operator for a Quaternion and  Quaternion type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator == (Quaternion<T1> q1, Quaternion<T2> q2) {
+    return (q1.re() == q2.re()) && (q1.i() == q2.i()) && (q1.j() == q2.j()) && (q1.k() == q2.k());
+}
+
+/**
+ * Equalirt operator for a Quaternion and  Non-Quaternion type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator == (Quaternion<T1> q1, T2 q2) {
+    return q1 == Quaternion<T2>(q2);
+}
+
+/**
+ * Equalirt operator for a Quaternion and  Non-Quaternion type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator == (T2 q2, Quaternion<T1> q1) {
+    return q1 == Quaternion<T2>(q2);
+}
+
+/**
+ * Equalirt operator for a Quaternion and  Complex type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator == (Quaternion<T1> q1, Complex<T2> q2) {
+    return q1 == Quaternion<T2>(q2);
+}
+
+/**
+ * Equalirt operator for a Quaternion and Complex type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator == (Complex<T2> q2, Quaternion<T1> q1) {
+    return q1 == Quaternion<T2>(q2);
+}
+
 /* Below are overloaded stream operators for the Quaternion class */
 
 /** Overloaded stream by reference */
