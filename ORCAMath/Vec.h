@@ -28,7 +28,7 @@ protected:
     
     /* Below are protected variables for the Vec class */
     
-    ORCA_SIZE_TYPE _n_elems;       // Stores the number of elements in the vector
+    index_t _n_elems;       // Stores the number of elements in the vector
     
     /* Below are protected constructors for the Vec class */
     
@@ -47,7 +47,7 @@ protected:
      * @param _n_elems Number of elements to allocate space for
      */
     
-    virtual void _allocate(ORCA_SIZE_TYPE _n_elems) {
+    virtual void _allocate(index_t _n_elems) {
 #ifndef ORCA_DISABLE_EMPTY_CHECKS
         if (_n_elems < 0) {
             throw ORCAExcept::EmptyElementError(); // Attempting to allocate an empty vector
@@ -57,21 +57,21 @@ protected:
         this->_n_elems = _n_elems;
         this->_n_cols = _n_elems;
         this->_n_rows = 1;
-    } /* virtual void _allocate(ORCA_SIZE_TYPE _n_elems) */
+    } /* virtual void _allocate(index_t _n_elems) */
     
     /**
      * Returns the address of the requsted element
      * @param elem Index of element
      */
     
-    virtual T* _address(ORCA_SIZE_TYPE elem) const {
+    virtual T* _address(index_t elem) const {
 #ifndef ORCA_DISABLE_BOUNDS_CHECKS
         if ((elem < 0) || (elem > this->length())) {
             throw ORCAExcept::OutOfBoundsError(); // Attempting to index out of bounds
         }
 #endif
         return this->_mat + elem;
-    } /* virtual T* _address(ORCA_SIZE_TYPE elem) const */
+    } /* virtual T* _address(index_t elem) const */
     
 public:
     
@@ -85,7 +85,7 @@ public:
     template <class T1>
     Vec(Vec<T1> _casted) {
         this->_allocate(_casted.length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted.length(); ++i) {
             this->set(i, _casted.at(i));
         }
@@ -99,7 +99,7 @@ public:
     template <class T1>
     Vec(Vec<T1>* _casted) {
         this->_allocate(_casted->length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted->length(); ++i) {
             this->set(i, _casted->at(i));
         }
@@ -110,9 +110,9 @@ public:
      * @param elements number of elements in vector
      */
     
-    Vec(ORCA_SIZE_TYPE elements) {
+    Vec(index_t elements) {
         this->_allocate(elements);
-    } /* Vec(ORCA_SIZE_TYPE elements) */
+    } /* Vec(index_t elements) */
     
     /**
      * Constructs a vector from an initializer list
@@ -121,7 +121,7 @@ public:
     
     Vec(std::initializer_list<T> _casted_values) {
         this->_allocate(_casted_values.size());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < this->_n_elems; ++i) {
             this->set(i, *(_casted_values.begin() + i));
         }
@@ -135,14 +135,14 @@ public:
      * @param elem Element
      */
     
-    virtual void set(ORCA_SIZE_TYPE index, T elem) {
+    virtual void set(index_t index, T elem) {
         /* Assign Element */
         *(this->_address(index)) = elem;
         /* Reset Sticky Compute Mask */
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
         this->_stickyComputeMask = 0;
 #endif
-    } /* virtual void set(ORCA_SIZE_TYPE index, T elem) */
+    } /* virtual void set(index_t index, T elem) */
     
     /**
      Assigns an element at the speciifed index.
@@ -151,7 +151,7 @@ public:
      * @param elem Element
      */
     
-    virtual void set(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col, T elem) override {
+    virtual void set(index_t row, index_t col, T elem) override {
 #ifndef ORCA_DISABLE_BOUNDS_CHECKS
         /* Check for out of bounds indexing */
         if (row != 0) {
@@ -164,7 +164,7 @@ public:
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
         this->_stickyComputeMask = 0;
 #endif
-    } /* virtual void set(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col, T elem) override */
+    } /* virtual void set(index_t row, index_t col, T elem) override */
     
     /* Below are public getters for the Vec class */
     
@@ -174,9 +174,9 @@ public:
      * @return element at index
      */
     
-    virtual T at(ORCA_SIZE_TYPE index) const {
+    virtual T at(index_t index) const {
         return *(this->_address(index)); //Index the matrix
-    } /* virtual T at(ORCA_SIZE_TYPE index) const */
+    } /* virtual T at(index_t index) const */
     
     /**
      * Returns element at the specified index
@@ -185,7 +185,7 @@ public:
      * @return element at index
      */
     
-    virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override {
+    virtual T at(index_t row, index_t col) const override {
 #ifndef ORCA_DISABLE_BOUNDS_CHECKS
         /* Check for out of bounds indexing */
         if (row != 0) {
@@ -193,13 +193,65 @@ public:
         }
 #endif
         return *(this->_address(col)); //Index the matrix
-    } /* virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override */
+    } /* virtual T at(index_t row, index_t col) const override */
     
-    ORCA_SIZE_TYPE length() const {
+    index_t length() const {
         return this->_n_elems;
-    } /* ORCA_SIZE_TYPE length() const */
+    } /* index_t length() const */
+    
+    /**
+     * Returns the sum of elements in the vector
+     * @return sum of vector elements
+     */
+    
+    T sum() const {
+        index_t i;
+        T result = 0;
+        for (i = 0; i < this->length(); ++i) {
+            result += this->at(i);
+        }
+        return result;
+    } /* T sum() const */
+    
+    /**
+     * Returns the product of elements in the vector
+     * @return product of vector elements
+     */
+    
+    T prod() const {
+        index_t i;
+        T result = 1;
+        for (i = 0; i < this->length(); ++i) {
+            result *= this->at(i);
+        }
+        return result;
+    } /* T sum() const */
     
 }; /* Vec class */
+
+/* Below are overloaded operations for the Vector class */
+
+/**
+ * Returns the sum of elements in the vector
+ * @param _vec Vector
+ * @return sum of vector elements
+ */
+
+template <class T>
+T sum(Vec<T> _vec) {
+    return _vec.sum();
+} /* T sum(Vec<T> _vec) */
+
+/**
+ * Returns the product of elements in the vector
+ * @param _vec Vector
+ * @return product of vector elements
+ */
+
+template <class T>
+T prod(Vec<T> _vec) {
+    return _vec.prod();
+} /* T prod(Vec<T> _vec) */
 
 /**
  * RowVec
@@ -256,7 +308,7 @@ public:
     template <class T1>
     RowVec(Vec<T1> _casted) {
         this->_allocate(_casted.length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted.length(); ++i) {
             this->set(i, _casted.at(i));
         }
@@ -270,7 +322,7 @@ public:
     template <class T1>
     RowVec(Vec<T1>* _casted) {
         this->_allocate(_casted->length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted->length(); ++i) {
             this->set(i, _casted->at(i));
         }
@@ -284,7 +336,7 @@ public:
     template <class T1>
     RowVec(typename Mat<T1>::MatRow _casted) {
         this->_allocate(_casted.length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted.length(); ++i) {
             this->set(i, _casted.at(i));
         }
@@ -308,7 +360,7 @@ protected:
      * @param _n_elems Number of elements to allocate space for
      */
     
-    virtual void _allocate(ORCA_SIZE_TYPE _n_elems) override {
+    virtual void _allocate(index_t _n_elems) override {
 #ifndef ORCA_DISABLE_EMPTY_CHECKS
         if (_n_elems < 0) {
             throw ORCAExcept::EmptyElementError(); // Attempting to allocate an empty vector
@@ -318,7 +370,7 @@ protected:
         this->_n_elems = _n_elems;
         this->_n_cols = 1;
         this->_n_rows = _n_elems;
-    } /* virtual void _allocate(ORCA_SIZE_TYPE _n_elems) */
+    } /* virtual void _allocate(index_t _n_elems) */
     
     /* Below are the protected constructors for the RowVec class */
     
@@ -367,7 +419,7 @@ public:
     template <class T1>
     ColVec(Vec<T1> _casted) {
         this->_allocate(_casted.length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted.length(); ++i) {
             this->set(i, _casted.at(i));
         }
@@ -381,7 +433,7 @@ public:
     template <class T1>
     ColVec(Vec<T1>* _casted) {
         this->_allocate(_casted->length());
-        ORCA_SIZE_TYPE i;
+        index_t i;
         for (i = 0; i < _casted->length(); ++i) {
             this->set(i, _casted->at(i));
         }
@@ -395,14 +447,14 @@ public:
      * @param elem Element
      */
     
-    virtual void set(ORCA_SIZE_TYPE index, T elem) override {
+    virtual void set(index_t index, T elem) override {
         /* Assign Element */
         *(this->_address(index)) = elem;
         /* Reset Sticky Compute Mask */
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
         this->_stickyComputeMask = 0;
 #endif
-    } /* virtual void set(ORCA_SIZE_TYPE index, T elem) */
+    } /* virtual void set(index_t index, T elem) */
     
     
     /**
@@ -412,7 +464,7 @@ public:
      * @param elem Element
      */
     
-    virtual void set(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col, T elem) override {
+    virtual void set(index_t row, index_t col, T elem) override {
 #ifndef ORCA_DISABLE_BOUNDS_CHECKS
         /* Check for out of bounds indexing */
         if (col != 0) {
@@ -425,7 +477,7 @@ public:
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
         this->_stickyComputeMask = 0;
 #endif
-    } /* virtual void set(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col, T elem) override */
+    } /* virtual void set(index_t row, index_t col, T elem) override */
     
     /* Below are the public getters for the ColVec class */
     
@@ -435,9 +487,9 @@ public:
      * @return element at index
      */
     
-    virtual T at(ORCA_SIZE_TYPE index) const override {
+    virtual T at(index_t index) const override {
         return *(this->_address(index)); //Index the matrix
-    } /* virtual T at(ORCA_SIZE_TYPE index) const */
+    } /* virtual T at(index_t index) const */
     
     /**
      * Returns element at the specified index
@@ -453,7 +505,7 @@ public:
      * @return element at index
      */
     
-    virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override {
+    virtual T at(index_t row, index_t col) const override {
 #ifndef ORCA_DISABLE_BOUNDS_CHECKS
         /* Check for out of bounds indexing */
         if (col != 0) {
@@ -461,7 +513,7 @@ public:
         }
 #endif
         return *(this->_address(row)); //Index the matrix
-    } /* virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override */
+    } /* virtual T at(index_t row, index_t col) const override */
     
 };
 
@@ -481,7 +533,7 @@ auto dot(Vec<T1> v1, Vec<T2> v2) {
     }
 #endif
     auto result = v1.at(0) * v2.at(0);
-    ORCA_SIZE_TYPE i;
+    index_t i;
     for (i = 1; i < v1.length(); ++i) {
         result += v1.at(i) * v2.at(i);
     }
@@ -496,7 +548,7 @@ template <class T>
 class Mat<T>::MatRow : public RowVec<T> {
     /* Below are the private member variables for the MatRow class */
     Mat<T>* _matrix;        // Stores a pointer to the matrix the row belongs to
-    ORCA_SIZE_TYPE _row;               // Stores the row number in _matrix
+    index_t _row;               // Stores the row number in _matrix
 public:
     
     /* Below are all public constructors for the MatRow class */
@@ -507,7 +559,7 @@ public:
      * @param row Row number
      */
     
-    MatRow(Mat<T> matrix, ORCA_SIZE_TYPE row) {
+    MatRow(Mat<T> matrix, index_t row) {
         this->_matrix = &matrix;
         this->_row = row;
         this->_n_elems = matrix.cols();
@@ -521,7 +573,7 @@ public:
      * @param row Row number
      */
     
-    MatRow(Mat<T>* matrix, ORCA_SIZE_TYPE row) {
+    MatRow(Mat<T>* matrix, index_t row) {
         this->_matrix = matrix;
         this->_row = row;
         this->_n_elems = matrix->cols();
@@ -534,7 +586,7 @@ public:
      * @param index Element  Index
      */
     
-    virtual T at(ORCA_SIZE_TYPE index) const override {
+    virtual T at(index_t index) const override {
         return this->_matrix->at(this->_row, index); //Index the matrix
     }
     
@@ -544,7 +596,7 @@ public:
      * @param col Element Column Index
      */
     
-    virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override {
+    virtual T at(index_t row, index_t col) const override {
         return this->_matrix->at(this->_row, col); //Index the matrix
     }
     
@@ -556,7 +608,7 @@ template <class T>
 class Mat<T>::MatCol : public ColVec<T> {
     /* Below are the private member variables for the MatRow class */
     Mat<T>* _matrix;        // Stores a pointer to the matrix the row belongs to
-    ORCA_SIZE_TYPE _col;               // Stores the col number in _matrix
+    index_t _col;               // Stores the col number in _matrix
 public:
     
     /* Below are all public constructors for the MatCol class */
@@ -567,7 +619,7 @@ public:
      * @param col Column number
      */
     
-    MatCol(Mat<T> matrix, ORCA_SIZE_TYPE col) {
+    MatCol(Mat<T> matrix, index_t col) {
         this->_matrix = &matrix;
         this->_col = col;
         this->_n_elems = matrix.rows();
@@ -581,7 +633,7 @@ public:
      * @param col Column number
      */
     
-    MatCol(Mat<T> *matrix, ORCA_SIZE_TYPE col) {
+    MatCol(Mat<T> *matrix, index_t col) {
         this->_matrix = matrix;
         this->_col = col;
         this->_n_elems = matrix->rows();
@@ -594,7 +646,7 @@ public:
      * @param index Element  Index
      */
     
-    virtual T at(ORCA_SIZE_TYPE index) const override {
+    virtual T at(index_t index) const override {
         return this->_matrix->at(index, this->_col); //Index the matrix
     }
     
@@ -604,7 +656,7 @@ public:
      * @param col Element Column Index
      */
     
-    virtual T at(ORCA_SIZE_TYPE row, ORCA_SIZE_TYPE col) const override {
+    virtual T at(index_t row, index_t col) const override {
         return this->_matrix->at(this->_col, row); //Index the matrix
     }
     
