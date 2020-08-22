@@ -34,11 +34,7 @@ namespace ORCA {
 template <class T>
 class Quaternion {
 protected:
-    T _real;    // Real component of quaternion
-    T _qi;    // First Imaginary component of quaternion
-    T _qj;    // First Imaginary component of quaternion
-    T _qk;    // First Imaginary component of quaternion
-    
+    T _qVec[4]; // Vector of quaternion components
 public:
     
     /* Below are public constructors for the Quaternion class */
@@ -48,10 +44,10 @@ public:
      */
     
     Quaternion() {
-        this->_real = 0;
-        this->_qi = 0;
-        this->_qj = 0;
-        this->_qk = 0;
+        this->_qVec[0] = 0;
+        this->_qVec[1] = 0;
+        this->_qVec[2] = 0;
+        this->_qVec[3] = 0;
     }
     
     /**
@@ -66,10 +62,10 @@ public:
             throw ORCAExcept::BadDimensionsError();
         }
 #endif
-        this->_real = *_castValues.begin();
-        this->_qi = *(_castValues.begin() + 1);
-        this->_qj = *(_castValues.begin() + 2);
-        this->_qk = *(_castValues.begin() + 3);
+        short i;
+        for (i = 0; i < 4; ++i) {
+            this->_qVec[i] = *(_castValues.begin() + i);
+        }
     } /* Quaternion(std::initializer_list<T> _castValues) */
     
     /**
@@ -81,10 +77,10 @@ public:
      */
     
     Quaternion(T real, T imag1, T imag2, T imag3) {
-        this->_real = real;
-        this->_qi = imag1;
-        this->_qj = imag2;
-        this->_qk = imag3;
+        this->_qVec[0] = real;
+        this->_qVec[1] = imag1;
+        this->_qVec[2] = imag2;
+        this->_qVec[3] = imag3;
     } /* Quaternion(T real, T imag1, T imag2, T imag3) */
     
     /**
@@ -95,10 +91,10 @@ public:
     
     template<class T1>
     Quaternion(T1 cast) {
-        this->_real = cast;
-        this->_qi = 0;
-        this->_qj = 0;
-        this->_qk = 0;
+        this->_qVec[0] = cast;
+        this->_qVec[1] = 0;
+        this->_qVec[2] = 0;
+        this->_qVec[3] = 0;
     } /* Quaternion(T1 cast) */
     
     /**
@@ -109,10 +105,10 @@ public:
     
     template<class T1>
     Quaternion(Quaternion<T1> cast) {
-        this->_real = cast.real();
-        this->_qi = cast.i();
-        this->_qj = cast.j();
-        this->_qk = cast.k();
+        this->_qVec[0] = cast.real();
+        this->_qVec[1] = cast.i();
+        this->_qVec[2] = cast.j();
+        this->_qVec[3] = cast.k();
     } /* Quaternion(T1 cast) */
     
     /**
@@ -123,11 +119,81 @@ public:
     
     template<class T1>
     Quaternion(Complex<T1> cast) {
-        this->_real = cast.real();
-        this->_qi = cast.im();
-        this->_qj = 0;
-        this->_qk = 0;
+        this->_qVec[0] = cast.real();
+        this->_qVec[1] = cast.im();
+        this->_qVec[2] = 0;
+        this->_qVec[3] = 0;
     } /* Quaternion(T1 cast) */
+    
+    /* Below are the public operators for the Quaternion class */
+    
+    /**
+     * Index subsript operator for quaternion class
+     * Returns the real,i,j,k component correspoinding to the index
+     * @param index Index
+     * @return Component of quaternion number
+     */
+    
+    T operator [] (short index) {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if ((index < 0) || (index > 3)) {
+            throw ORCAExcept::OutOfBoundsError(); // Indexed outide quaternion array
+        }
+#endif
+        return this->_qVec[index];
+    }
+    
+    /* Below are public setters for the Quaternion class */
+    
+    /**
+     * Sets the real component of the number
+     * @param val Value for real component
+     */
+    
+    void setReal(T val) {
+        this->_qVec[0] = val;
+    }
+    
+    /**
+     * Sets the i component of the number
+     * @param val Value for real component
+     */
+    
+    void setI(T val) {
+        this->_qVec[1] = val;
+    }
+    
+    /**
+     * Sets the j component of the number
+     * @param val Value for real component
+     */
+    
+    void setJ(T val) {
+        this->_qVec[2] = val;
+    }
+    
+    /**
+     * Sets the k component of the number
+     * @param val Value for real component
+     */
+    
+    void setK(T val) {
+        this->_qVec[3] = val;
+    }
+    
+    /**
+     * Sets the component at the specified index
+     * @param val Value for real component
+     */
+    
+    void set(short index, T val) {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if ((index < 0) || (index > 3)) {
+            throw ORCAExcept::OutOfBoundsError(); // Attempted to index outside quaternion
+        }
+#endif
+        this->_qVec[index] = val;
+    }
     
     /* Below are public getters for the Quaternion class */
     
@@ -137,7 +203,7 @@ public:
      */
     
     T real() const {
-        return this->_real;
+        return this->_qVec[0];
     }
     
     /**
@@ -146,7 +212,7 @@ public:
      */
     
     T re() const {
-        return this->_real;
+        return this->_qVec[0];
     }
     
     /**
@@ -155,7 +221,7 @@ public:
      */
     
     T j() const {
-        return this->_qj;
+        return this->_qVec[2];
     }
     
     /**
@@ -164,7 +230,7 @@ public:
      */
     
     T k() const {
-        return this->_qk;
+        return this->_qVec[3];
     }
     
     /**
@@ -173,7 +239,22 @@ public:
      */
     
     T i() const {
-        return this->_qi;
+        return this->_qVec[1];
+    }
+    
+    /**
+     * Returns the component at the specified index
+     * @param index Index
+     * @return corresponding component
+     */
+    
+    T at(short index) {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if ((index < 0) || (index > 3)) {
+            throw ORCAExcept::OutOfBoundsError(); // Indexed outide quaternion array
+        }
+#endif
+        return this->_qVec[index];
     }
     
     /**
@@ -182,7 +263,7 @@ public:
      */
     
     Quaternion<T> conj() const {
-        return Quaternion<T>(this->_real, -this->_qi, -this->_qj, -this->_qk);
+        return Quaternion<T>(this->_qVec[0], -this->_qVec[1], -this->_qVec[2], -this->_qVec[3]);
     }
     
     /**
@@ -582,6 +663,62 @@ auto operator == (Quaternion<T1> q1, Complex<T2> q2) {
 }
 
 /**
+ * Equalirt operator for a Quaternion and  Quaternion type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator != (Quaternion<T1> q1, Quaternion<T2> q2) {
+    return (q1.re() != q2.re()) && (q1.i() != q2.i()) && (q1.j() != q2.j()) && (q1.k() != q2.k());
+}
+
+/**
+ * Equalirt operator for a Quaternion and  Non-Quaternion type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator != (Quaternion<T1> q1, T2 q2) {
+    return q1 != Quaternion<T2>(q2);
+}
+
+/**
+ * Equalirt operator for a Quaternion and  Non-Quaternion type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator != (T2 q2, Quaternion<T1> q1) {
+    return q1 != Quaternion<T2>(q2);
+}
+
+/**
+ * Equalirt operator for a Quaternion and  Complex type
+ * @tparam T1 class of left complex type
+ * @tparam T2 class  type
+ * @param q1 left Quaternion type
+ * @param q2 right  type
+ * @return equality of two numbers
+ */
+
+template<class T1, class T2>
+auto operator != (Quaternion<T1> q1, Complex<T2> q2) {
+    return q1 != Quaternion<T2>(q2);
+}
+
+/**
  * Equalirt operator for a Quaternion and Complex type
  * @tparam T1 class of left complex type
  * @tparam T2 class  type
@@ -591,8 +728,8 @@ auto operator == (Quaternion<T1> q1, Complex<T2> q2) {
  */
 
 template<class T1, class T2>
-auto operator == (Complex<T2> q2, Quaternion<T1> q1) {
-    return q1 == Quaternion<T2>(q2);
+auto operator != (Complex<T2> q2, Quaternion<T1> q1) {
+    return q1 != Quaternion<T2>(q2);
 }
 
 /* Below are overloaded stream operators for the Quaternion class */
