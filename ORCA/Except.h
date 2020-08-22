@@ -22,7 +22,7 @@ namespace ORCAExcept {
  * Exception container class for ORCA error codes
  */
 
-class ORCAException : public std::exception {
+class ORCAException {
 protected:
     
     int _code; // Code for ORCA Error
@@ -47,14 +47,7 @@ public:
         this->_code = error;
         this->_desc = "Error: ";
     }
-    
-    /**
-     * Public destructor for class
-     */
-    
-    ~ORCAException() {
-        
-    }
+
     
     /**
      * Returns the _code member of the class
@@ -89,8 +82,8 @@ public:
         return this->code() == i;
     }
     
-    
-    
+    /* Below are member functions for the Except class */
+ 
 };
 
 /* BadDimensionsError: Thrown when an operation is not compatible with the dimensions of the given data */
@@ -158,12 +151,12 @@ public:
 
 /* Overloaded stream operators for printing error codes */
 
-std::ostream& operator<<(std::ostream& os, const ORCAException& e) {
+static std::ostream& operator<<(std::ostream& os, const ORCAException& e) {
     os << e.desc() << e.code();
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const ORCAException* e) {
+static std::ostream& operator<<(std::ostream& os, const ORCAException* e) {
     os << *e;
     return os;
 }
