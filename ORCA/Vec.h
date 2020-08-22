@@ -44,18 +44,18 @@ protected:
     
     /**
      * Allocates space for vector
-     * @param _n_elems Number of elements to allocate space for
+     * @param n_elems Number of elements to allocate space for
      */
     
-    virtual void _allocate(index_t _n_elems) {
+    virtual void _allocate(index_t n_elems) {
 #ifndef ORCA_DISABLE_EMPTY_CHECKS
         if (_n_elems < 0) {
             throw ORCAExcept::EmptyElementError(); // Attempting to allocate an empty vector
         }
 #endif
-        this->_mat = static_cast<T*>(malloc(sizeof(T) * _n_elems));
-        this->_n_elems = _n_elems;
-        this->_n_cols = _n_elems;
+        this->_mat = static_cast<T*>(malloc(sizeof(T) * n_elems));
+        this->_n_elems = n_elems;
+        this->_n_cols = n_elems;
         this->_n_rows = 1;
     } /* virtual void _allocate(index_t _n_elems) */
     
@@ -110,7 +110,7 @@ public:
      * @param elements number of elements in vector
      */
     
-    Vec(index_t elements) {
+    Vec(index_t elements) : Mat<T>(1, elements) {
         this->_allocate(elements);
     } /* Vec(index_t elements) */
     
@@ -269,13 +269,6 @@ protected:
     
 public:
     
-    /* Below are the public destructors for the RowVec class */
-    
-    ~RowVec() {
-        //TODO: Pointer being freed was not allocated error
-        //delete this->_vec;
-    } /* ~RowVec() */
-    
     /* Below are the public constructors for the RowVec class */
     
     /**
@@ -292,12 +285,7 @@ public:
      * @param _casted_values values to cast to vector
      */
     
-    RowVec(std::initializer_list<T> _casted_values) {
-        this->_allocate(_casted_values.size());
-        int i;
-        for (i = 0; i < this->_n_elems; ++i) {
-            this->set(i, *(_casted_values.begin() + i));
-        }
+    RowVec(std::initializer_list<T> _casted_values) : Vec<T>(_casted_values) {
     } /* RowVec(std::initializer_list<T> _casted_values) */
     
     /**
@@ -403,12 +391,7 @@ public:
      * @param _casted_values values to cast to vector
      */
     
-    ColVec(std::initializer_list<T> _casted_values) {
-        this->_allocate(_casted_values.size());
-        int i;
-        for (i = 0; i < this->_n_elems; ++i) {
-            this->set(i, *(_casted_values.begin() + i));
-        }
+    ColVec(std::initializer_list<T> _casted_values) : Vec<T>(_casted_values){
     } /* ColVec(std::initializer_list<T> _casted_values) */
     
     /**
@@ -580,6 +563,7 @@ public:
         this->_n_cols = matrix->cols();
         this->_n_rows = 1;
     }
+    /* Below are public getters for the MatRow class */
     
     /**
      * Returns element at the specified index
@@ -657,6 +641,11 @@ public:
      */
     
     virtual T at(index_t row, index_t col) const override {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if (col != this->_col) {
+            throw ORCAExcept::OutOfBoundsError(); // Indexed outside col bounds
+        }
+#endif
         return this->_matrix->at(this->_col, row); //Index the matrix
     }
     
