@@ -10,7 +10,8 @@
 #ifndef Constants_h
 #define Constants_h
 
-constexpr double ORCA_M_ROOT2 = 1.414213562373095;
-constexpr double ORCA_M_PI = 3.141592653589793;
+#define ORCA_EQUALITY_THRESHOLD (0.000001)
+#define ORCA_M_ROOT2 (1.414213562373095)
+#define ORCA_M_PI (3.141592653589793)
 
 #endif /* Constants_h */
