@@ -502,6 +502,48 @@ auto operator == (T2 c2, Complex<T1> c1) {
     return c1 == Complex<T2>(c2);
 }
 
+/**
+ * Comparison  operator for 2 complex types
+ * @tparam T1 class of left type
+ * @tparam T2 class of right complex type
+ * @param c1 left type
+ * @param c2 right complex type
+ * @return equalty comparison
+ */
+
+template<class T1, class T2>
+auto operator != (Complex<T1> c1, Complex<T2> c2) {
+    return (c1.real() != c2.real()) && (c1.imag() != c2.imag());
+}
+
+/**
+ * Comparison  operator for  complex types and non complex type
+ * @tparam T1 class of left type
+ * @tparam T2 class of right complex type
+ * @param c1 left type
+ * @param c2 right complex type
+ * @return equalty comparison
+ */
+
+template<class T1, class T2>
+auto operator != (Complex<T1> c1, T2 c2) {
+    return c1 != Complex<T2>(c2);
+}
+
+/**
+ * Comparison  operator for  complex types and non complex type
+ * @tparam T1 class of left type
+ * @tparam T2 class of right complex type
+ * @param c1 left type
+ * @param c2 right complex type
+ * @return equalty comparison
+ */
+
+template<class T1, class T2>
+auto operator != (T2 c2, Complex<T1> c1) {
+    return c1 != Complex<T2>(c2);
+}
+
 
 /* Below are other overloaded operators for the Complex class */
 
