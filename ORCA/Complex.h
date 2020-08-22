@@ -101,6 +101,43 @@ public:
         this->_imag = cast.imag();
     } /* Complex(T1 cast) */
     
+    /* Below are the public operators for the Quaternion class */
+    
+    /**
+     * Index subsript operator for complex class
+     * Returns the real comonent if index is 0
+     * Returns the imaginary component if the index is 1
+     * @param index Index
+     * @return Component of complex number
+     */
+    
+    T operator [] (short index) {
+#ifndef ORCA_DISABLE_BOUNDS_CHECKS
+        if ((index < 0) || (index > 1)) {
+            throw ORCAExcept::OutOfBoundsError(); // Indexed outide quaternion array
+        }
+#endif
+        return this->_qVec[index];
+    }
+    
+    /* Below are the public setters for the Complex class */
+    
+    /**
+     * Setter for real component of complex class
+     */
+    
+    void setReal(T real) {
+        this->_real = real;
+    }
+    
+    /**
+     * Setter for complex component of complex class
+     */
+    
+    void setImag(T imag) {
+        this->_real = imag;
+    }
+    
     /* Below are public getters for the Complex class */
     
     /**
