@@ -156,7 +156,16 @@ protected:
         } /* SubMat(Mat<T>* matrix, index_t r1, index_t r2, index_t c1, index_t c2) */
         
         /* Below are public operators for the SubMat class */
-
+        
+        /**
+         * Index operator for SubMatrix
+         * If the matrix has only 1 row, it returns the element at the index
+         * Otherwise it returns the desired row
+         * SubMat container
+         * @param index index of element
+         * @return element
+         */
+        
         virtual SubMat operator [] (index_t index) override {
             if (this->_n_rows == 1) {
                 return this->range(0, 0, index, index);
@@ -589,6 +598,14 @@ public:
     } /* Mat(int rows, int cols, fill::fillType type, T elem) */
     
     /* Below are public operators for the Mat class */
+    
+    /**
+     * Index operator for Matrix
+     * Returns the row at the specified index wrapped in a
+     * SubMat container
+     * @param index index of row
+     * @return Row at index
+     */
     
     virtual SubMat operator [](index_t index) {
         return this->range(index, index, 0, this->cols() - 1);
