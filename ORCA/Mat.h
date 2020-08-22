@@ -29,8 +29,6 @@ class ColVec;
 
 template <class T>
 class Mat {
-    template <class T1, class T2>
-    friend auto operator * (Mat<T1> m1, Mat<T2> m2);
 private:
     
     /**
@@ -122,6 +120,9 @@ protected:
         
     }; /* class Mat<T>::MatTr : public Mat<T> */
     
+    /* Class definition for SubMat */
+    /* This class is a read-only container to speed up range indexing operations */
+    
     class SubMat : public Mat<T> {
     protected:
         /* Below are protected members of the Sub class */
@@ -132,7 +133,7 @@ protected:
         index_t _c2;
     public:
         
-        /* Below are public constructors for the MatTr class */
+        /* Below are public constructors for the SubMat class */
         
         /**
          * Constructor from pointer to matrix
@@ -146,14 +147,22 @@ protected:
             }
 #endif
             this->_matrix = matrix;
-            this->_n_cols = r2 - r1 + 1;
-            this->_n_rows = c2 - c1 + 1;
+            this->_n_rows = r2 - r1 + 1;
+            this->_n_cols = c2 - c1 + 1;
             this->_r1 = r1;
             this->_r2 = r2;
             this->_c1 = c1;
-            
             this->_c2 = c2;
         } /* SubMat(Mat<T>* matrix, index_t r1, index_t r2, index_t c1, index_t c2) */
+        
+        /* Below are public operators for the SubMat class */
+
+        virtual SubMat operator [] (index_t index) override {
+            if (this->_n_rows == 1) {
+                return this->range(0, 0, index, index);
+            }
+            return this->range(index, index, 0, this->cols() - 1);
+        }
         
         /* Below are public getters for the SubMat class */
         
@@ -175,9 +184,51 @@ protected:
         
     }; /* class SubMat : public Mat<T> */
     
+    /* Class definition for MatInv */
+    /* This class is a read-only container to speed up inverse read operations */
+    
+    class MatInv : public Mat<T> {
+    private:
+        /**
+         * Allocates memory space for Matrix
+         * @param rows number or rows to be allocated
+         * @param cols number of columns to be allocated
+         */
+        
+        virtual void _allocate(index_t rows, index_t cols) {
+            /* Check for proper dimensions in allocation */
+#ifndef ORCA_DISABLE_DIMENSION_CHECKS
+            if ((rows < 0) || (cols < 0)) {
+                throw ORCAExcept::BadDimensionsError(); // Attempting to allocate a negative amount of rows or columns
+            }
+#endif
+#ifndef ORCA_DISABLE_EMPTY_CHECKS
+            if ((rows == 0) || (cols == 0)) {
+                throw ORCAExcept::EmptyElementError(); // Attemping to allocate a zero amount of rows or columns
+            }
+#endif
+            /* Initialize Elements */
+            this->_n_rows = rows;
+            this->_n_cols = cols;
+            this->_mat = static_cast<T*>(malloc(sizeof(T) * rows * cols));
+            /* Reset sitckyCompute parameters of the matrix only of stickyCompute is enabled */
+        }
+    public:
+        MatInv(Mat<T> _castM) {
+            _allocate(_castM.rows(), _castM.cols());
+            index_t i,j;
+            for (i = 0; i < this->rows(); ++i) {
+                for (j = 0; j < this->cols(); ++j) {
+                    this->set(i, j, _castM.at(i,j));
+                }
+            }
+        } /* MatInv(Mat<T> _castM) */
+        
+    };
+    
     /* Below are protcted variables of the Mat class */
     
-    T *_mat;                    // Storage pointer for matrix elements
+    T* _mat;                    // Storage pointer for matrix elements
     index_t _n_rows;                // Number of rows in the matrix
     index_t _n_cols;                // Number of columns in the matrix
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
@@ -185,7 +236,7 @@ protected:
     T _det;                     // Determinant of matrix. Only included if stickyCompute is enabled
     //Vec<T>* _diag;                   // Diagonal of matrix
     //Mat<T> _transpose;             // Transpose of matrix. Only included if stickyCompute is enabled
-    //Mat<T> _inv;                   // Inverse of matrix. Only included if stickyCompute is enabled.
+    MatInv* _inv;                   // Inverse of matrix. Only included if stickyCompute is enabled.
 #endif
     
     /* Below are protected constuctors for the Mat class */
@@ -219,7 +270,7 @@ protected:
     /**
      * Fills a Matrix with Random Values
      * @param lowerBound Lower Bound
-     * @PARAM upperBound Upper Bound
+     * @param upperBound Upper Bound
      */
     
     void randFill(T lowerBound, T upperBound) {
@@ -296,6 +347,7 @@ public:
         }
     } /* Mat(int rows, int cols) */
     
+    
     /**
      * Casted copy constructor from pointer to matrix tranpose container class
      * @param _castM Other matrix
@@ -362,7 +414,7 @@ public:
      * @param _castM Other matrix
      */
     template <class T1>
-    Mat(Mat<T1> *_castM) {
+    Mat(Mat<T1> *_castM){
         _allocate(_castM->rows(), _castM->cols());
         int i,j;
         for (i = 0; i < this->rows(); ++i) {
@@ -403,10 +455,10 @@ public:
             }
         }
     } /* Mat(std::initializer_list<std::initializer_list<T> > _castValues) */
-    //TODO: Complete block matrix constructor
-#if 0
+    
     /**
      * Casted constructor from std::initializer_list.
+     * Used for the initialization of block matricies
      * @param _castValues Values for array
      */
     
@@ -422,9 +474,8 @@ public:
             colNum += (*(((_castValues.begin())->begin() + i))).cols();
         }
         
-        for (i = 0; i < (*(_castValues.begin())).size(); ++i) {
+        for (i = 0; i < _castValues.size(); ++i) {
             index_t colNumTemp = 0;
-            std::cout << (*(((_castValues.begin() + i)->begin()))) << std::endl;
             index_t rowNumTemp = (*(((_castValues.begin() + i)->begin()))).rows();
             rowNum += rowNumTemp;
             for (j = 0; j < (*(_castValues.begin() + i)).size(); ++j) {
@@ -442,24 +493,26 @@ public:
 #endif
         }
         
-        assert(0);
-        
-        _allocate(_castValues.size(), (*(_castValues.begin())).size());
-        
-        for (i = 0; i < this->_n_rows; ++i) {
-            for (j = 0; j < this->_n_cols; ++j) {
-#ifndef ORCA_DISABLE_DIMENSION_CHECKS
-                /* Ensure that all rows have the same number of elements */
-                if ((_castValues.begin() + i)->size() != _n_cols) {
-                    throw ORCAExcept::BadDimensionsError(); // Inconsitant size in matrix rows
+        _allocate(rowNum, colNum);
+        index_t rowStart = 0;
+        index_t colStart = 0;
+        index_t iInnerLoop = 0;
+        index_t jInnerLoop = 0;
+        for (i = 0; i < _castValues.size(); ++i) {
+            colStart = 0;
+            for (j = 0; j < (*(_castValues.begin() + i)).size(); ++j) {
+                auto M =  (*(((_castValues.begin() + i)->begin() + j)));
+                for (iInnerLoop = 0; iInnerLoop < M.rows(); ++iInnerLoop) {
+                    for (jInnerLoop = 0; jInnerLoop < M.cols(); ++jInnerLoop) {
+                        this->set(rowStart + iInnerLoop, colStart + jInnerLoop, M.at(iInnerLoop,jInnerLoop));
+                    }
                 }
-#endif
-                
-                //this->set(i, j, *(((_castValues.begin() + i)->begin()) + j));
+                colStart += M.rows();
             }
+            rowStart += (*(((_castValues.begin() + i)->begin()))).rows();
         }
     } /* Mat(std::initializer_list<std::initializer_list<T> > _castValues) */
-#endif
+    
     /**
      * Construct and populate matrix
      * @param rows Number of Rows
@@ -534,6 +587,12 @@ public:
                 break;
         }
     } /* Mat(int rows, int cols, fill::fillType type, T elem) */
+    
+    /* Below are public operators for the Mat class */
+    
+    virtual SubMat operator [](index_t index) {
+        return this->range(index, index, 0, this->cols() - 1);
+    }
     
     /* Below are public setters for the Mat class */
     
@@ -687,10 +746,40 @@ public:
     
     /**
      * Returns a transpose container for the matrix
+     * @return Matrix Transpose
      */
     
     MatTr t() {
         return MatTr(this);
+    }
+    
+    /**
+     * Returns the inverse of the matrix
+     * @return Matrix Inverse
+     */
+    
+    Mat<T> inv() {
+#ifndef ORCA_DISABLE_STICKY_COMPUTE
+        if ((this->_stickyComputeMask & ORCA_STICKY_COMPUTE_INV_MASK) != 0) {
+            /* Inverse has been calculated, return previous result */
+            return *this->_inv;
+        }
+#endif
+#ifndef ORCA_DISABLE_DIMENSIONS_CHECKS
+        if (this->_n_rows != this->_n_cols) {
+            throw ORCAExcept::BadDimensionsError(); // Matrix must be square
+        }
+#endif
+
+#ifndef ORCA_DISABLE_STICKY_COMPUTE
+        //TODO: this copying performs the fill operation twice
+        this->_inv = new MatInv((*this).rref(Mat<T>(this->_n_rows, this->_n_cols, fill::eye)));
+        this->_stickyComputeMask |= ORCA_STICKY_COMPUTE_INV_MASK;
+        return *this->_inv;
+#else
+        return (*this).rref(Mat<T>(this->_n_rows, this->_n_cols, fill::eye));
+#endif
+        
     }
     
     /**
@@ -790,6 +879,11 @@ public:
             return this->_det;
         }
 #endif
+#ifndef ORCA_DISABLE_DIMENSIONS_CHECKS
+        if (this->_n_rows != this->_n_cols) {
+            throw ORCAExcept::BadDimensionsError();
+        }
+#endif
         index_t lead = 0;
         index_t r;
         T multiplier = 1.0;
@@ -832,6 +926,95 @@ public:
 #endif
         
     } /* T det() */
+    /**
+     * Performs Gaussian-Elimination on the matrix to reduce it to rowreduced echelon form
+     * @return Reduced Matrix
+     */
+    Mat<T> rref() {
+        Mat<T> _m1Clone = this;
+        index_t lead = 0;
+        index_t r;
+        for (r = 0; r < _m1Clone.rows(); ++r) {
+            if (_m1Clone.cols() < lead) {
+                return _m1Clone;
+            }
+            index_t i = r;
+            
+            while (_m1Clone.at(i,lead) == 0) {
+                ++i;
+                if (_m1Clone.rows() == i) {
+                    i = r;
+                    ++lead;
+                    if (_m1Clone.cols() == lead) {
+                        return _m1Clone;
+                    }
+                }
+            }
+            _m1Clone.rowSwap(i,r);
+            if (_m1Clone.at(r,lead) != 0) {
+                _m1Clone.rowMutliply(r, 1 / (_m1Clone.at(r,lead)));
+            }
+            
+            for (i = 0; i < _m1Clone.rows(); ++i ) {
+                if (i != r) {
+                    _m1Clone.rowAdd(i, r, -_m1Clone.at(i,lead));
+                }
+            }
+            ++lead;
+        }
+        return _m1Clone;
+        
+    }
+    
+    /**
+     * Performs Gaussian-Elimination on 2 matricies to reduce it to rowreduced echelon form
+     * @param _m2 right matrix
+     * @return Reduced right Matrix
+     */
+    
+    Mat<T> rref(Mat<T> _m2) {
+        Mat<T> _m1Clone = this;
+        Mat<T> _m2Clone = _m2;
+        
+        index_t lead = 0;
+        index_t r;
+        for (r = 0; r < _m1Clone.rows(); ++r) {
+            if (_m1Clone.cols() < lead) {
+                return _m2Clone;
+            }
+            index_t i = r;
+            
+            while (_m1Clone.at(i,lead) == 0) {
+                ++i;
+                if (_m1Clone.rows() == i) {
+                    i = r;
+                    ++lead;
+                    if (_m1Clone.cols() == lead) {
+                        return _m2Clone;
+                    }
+                }
+            }
+            if (i != r) {
+                _m1Clone.rowSwap(i,r);
+                _m2Clone.rowSwap(i,r);
+            }
+            
+            if (_m1Clone.at(r,lead) != 0) {
+                _m2Clone.rowMutliply(r, 1 / (_m1Clone.at(r,lead)));
+                _m1Clone.rowMutliply(r, 1 / (_m1Clone.at(r,lead)));
+                _m2Clone.rowMutliply(r, 1 / (_m1Clone.at(r,lead)));
+            }
+            
+            for (i = 0; i < _m1Clone.rows(); ++i ) {
+                if (i != r) {
+                    _m2Clone.rowAdd(i, r, -_m1Clone.at(i,lead));
+                    _m1Clone.rowAdd(i, r, -_m1Clone.at(i,lead));
+                }
+            }
+            ++lead;
+        }
+        return _m2Clone;
+    }
     
 }; /* Mat class */
 
@@ -841,7 +1024,7 @@ public:
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const Mat<T>* mat) {
-    int i,j;
+    index_t i,j;
     
     os << mat->at(0,0);
     
@@ -1133,37 +1316,19 @@ T trace(Mat<T> _mat) {
 
 template <class T>
 Mat<T> rref(Mat<T> _m1) {
-    index_t lead = 0;
-    index_t r;
-    for (r = 0; r < _m1.rows(); ++r) {
-        if (_m1.cols() < lead) {
-            return _m1;
-        }
-        index_t i = r;
-        
-        while (_m1.at(i,lead) == 0) {
-            ++i;
-            if (_m1.rows() == i) {
-                i = r;
-                ++lead;
-                if (_m1.cols() == lead) {
-                    return _m1;
-                }
-            }
-        }
-        _m1.rowSwap(i,r);
-        if (_m1.at(r,lead) != 0) {
-            _m1.rowMutliply(r, 1 / (_m1.at(r,lead)));
-        }
-        
-        for (i = 0; i < _m1.rows(); ++i ) {
-            if (i != r) {
-                _m1.rowAdd(i, r, -_m1.at(i,lead));
-            }
-        }
-        ++lead;
-    }
-    return _m1;
+    return _m1.rref();
+}
+
+/**
+ * Performs Gaussian-Elimination on 2 matricies to reduce it to rowreduced echelon form
+ * @param _m1 left matrix
+ * @param _m2 right matrix
+ * @return Reduced right Matrix
+ */
+
+template <class T>
+Mat<T> rref(Mat<T> _m1, Mat<T> _m2) {
+    return _m1.rref(_m2);
 }
 
 /**
@@ -1177,6 +1342,31 @@ T det(Mat<T> _m1) {
     return _m1.det();
 }
 
+/* Below are creation functions for single matrix instances */
+
+/**
+ * Creates a matrix of zeros of the speciifed size
+ * @param rows Number of rows
+ * @param cols Number of column
+ * @return matrix of zeros
+ */
+
+template <class T>
+Mat<T> zeros(index_t rows, index_t cols) {
+    return Mat<T>(rows, cols, fill::zeros);
+}
+
+/**
+ * Creates an identity of the speciifed size
+ * @param rows Number of rows
+ * @param cols Number of column
+ * @return identity matrix
+ */
+
+template <class T>
+Mat<T> eye(index_t rows, index_t cols) {
+    return Mat<T>(rows, cols, fill::eye);
+}
 
 } /* ORCA namespace */
 
