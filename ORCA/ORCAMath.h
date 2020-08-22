@@ -29,7 +29,9 @@ typedef long long index_t;
  */
 
 #ifdef ORCA_DISABLE_ERROR_CHECKS
+#ifndef ORCA_DISABLE_ERROR_WARNING
 #warning ORCA: Error Checking has been disabled. This can cause crashing in some cases
+#endif
 #define ORCA_DISABLE_BOUNDS_CHECKS
 #define ORCA_DISABLE_NULL_CHECKS
 #define ORCA_DISABLE_DIMENSIONS_CHECKS
@@ -42,10 +44,12 @@ typedef long long index_t;
 #ifndef ORCA_DISABLE_STICKY_COMPUTE
 #define ORCA_STICKY_COMPUTE_DIAG_MASK (1 << 0)
 #define ORCA_STICKY_COMPUTE_DET_MASK (1 << 1)
+#define ORCA_STICKY_COMPUTE_INV_MASK (1 << 2)
 #endif
 
 
 #include "Constants.h"
+#include "Real.h"
 #include "Complex.h"
 #include "Quaternion.h"
 #include "Mat.h"
